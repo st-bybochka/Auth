@@ -5,11 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas import UserProfileSchema
 from app.models import UserProfile
+from app.core import hash_password
+from app.services.token_service import TokenService
+
 
 @dataclass
 class UserRepository:
     session: AsyncSession
-
+    token_service: TokenService
 
     async def get_user_by_username(self, username: str) -> UserProfileSchema | None:
         async with self.session as session:
@@ -17,11 +20,10 @@ class UserRepository:
             user = await session.execute(result)
             return user.scalar_one_or_none()
 
-    async def create_user(self, uasename: str, password: str):
+    async def create_user(self, username: str, password: str):
         async with self.session as session:
             user_model = UserProfile(
-                username=uasename,
-                password=password)
+                username=username,
+                password=hash_password(password))
             session.add(user_model)
             await session.commit()
-
