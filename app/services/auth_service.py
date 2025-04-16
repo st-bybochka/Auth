@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from fastapi import Response, Request
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
 
 from app.repositories import UserRepository
 from app.config import settings
-from app.exceptions import UserNotFoundException, UserIncorrectLoginOrPasswordException, TokenMissingException
+from app.exceptions import UserNotFoundException, UserIncorrectLoginOrPasswordException, TokenMissingException, TokenNotCorrect
 from app.services.token_service import TokenService
 from app.core import verify_password
 
@@ -49,3 +51,26 @@ class AuthService:
 
         response.delete_cookie(key="access_token")
         response.delete_cookie(key="refresh_token")
+
+    async def generate_access_token(self, user_id: int) -> str:
+        expire_date_unix = (datetime.utcnow() + timedelta(hours=30)).timestamp()
+        token = jwt.encode(
+            {"user_id": user_id, "exp": expire_date_unix},
+            self.settings.JWT_SECRET_KEY,
+            algorithm=self.settings.ALGORITHM
+        )
+        return token
+
+
+    async def get_user_id_from_access_token(self, access_token: str) -> int:
+
+        if not access_token:
+            raise TokenMissingException
+
+        try:
+            payload = jwt.decode(access_token, self.settings.JWT_SECRET_KEY, algorithms=[self.settings.JWT_ALGORITHM])
+
+        except JWTError:
+            raise TokenNotCorrect
+
+        return payload["user_id"]
