@@ -27,3 +27,9 @@ class UserRepository:
                 password=hash_password(password))
             session.add(user_model)
             await session.commit()
+
+    async def update_user(self, user: UserProfile):
+        async with self.session as session:
+            session.add(user)
+            await self.session.commit()
+
