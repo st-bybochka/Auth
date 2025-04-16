@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
 
@@ -6,7 +5,6 @@ from app.exceptions import UserAlreadyRegisteredException
 from app.services import UserService
 from app.dependencies import get_user_service
 from app.schemas import UserCreateSchema
-
 
 router = APIRouter(
     prefix="/user",

@@ -21,7 +21,7 @@ class TokenService:
         return token
 
     async def generate_refresh_token(self, user_id: int) -> str:
-        expire = datetime.utcnow() + timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
         token = jwt.encode(
             {"user_id": user_id, "exp": expire},
@@ -41,6 +41,7 @@ class TokenService:
             return payload["user_id"]
         except JWTError:
             raise TokenNotCorrect
+
 
 
 
