@@ -4,7 +4,7 @@ from typing import Annotated
 from app.schemas import UserCreateSchema
 from app.services import AuthService, auth_service
 from app.dependencies import get_auth_service
-from app.exceptions import UserNotFoundException, UserIncorrectLoginOrPasswordException
+from app.exceptions import UserNotFoundException, UserIncorrectLoginOrPasswordException, UserBlockedException
 
 router = APIRouter(
     prefix="/auth",
@@ -22,11 +22,12 @@ async def login(
 
         return await auth_service.login(data.username, data.password, response)
 
-    except (UserNotFoundException, UserIncorrectLoginOrPasswordException) as e:
+    except (UserNotFoundException, UserIncorrectLoginOrPasswordException, UserBlockedException) as e:
         raise HTTPException(
-            status_code=401,
+            status_code=e.status_code,
             detail=e.detail
         )
+
 
 @router.post("/logout")
 async def logout(
@@ -39,6 +40,7 @@ async def logout(
             status_code=401,
             detail=e.detail
         )
+
 
 @router.get("/refresh")
 async def refresh(
@@ -53,4 +55,3 @@ async def refresh(
             status_code=401,
             detail=str(e)
         )
-

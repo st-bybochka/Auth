@@ -1,11 +1,14 @@
+import re
+
 from dataclasses import dataclass
-from fastapi import Response, Request
+from fastapi import Response, Request, HTTPException
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 
 from app.repositories import UserRepository
 from app.config import settings
-from app.exceptions import UserNotFoundException, UserIncorrectLoginOrPasswordException, TokenMissingException, TokenNotCorrect
+from app.exceptions import (UserNotFoundException, UserIncorrectLoginOrPasswordException,
+                            TokenMissingException, TokenNotCorrect, UserBlockedException)
 from app.services.token_service import TokenService
 from app.core import verify_password
 
@@ -22,8 +25,23 @@ class AuthService:
         if not user:
             raise UserNotFoundException
 
+        current_time = datetime.utcnow()
+        if user.block_until and user.block_until > current_time:
+            raise UserBlockedException
+
         if not verify_password(password, user.password):
+            user.login_attempts += 1
+            if user.login_attempts >= 5:
+                user.block_until = current_time + timedelta(minutes=5)
+                user.login_attempts = 0
+            await self.user_repository.update_user(user)
+
             raise UserIncorrectLoginOrPasswordException
+
+        else:
+            user.login_attempts = 0
+            user.block_until = None
+            await self.user_repository.update_user(user)
 
         access_token = await self.token_service.generate_access_token(user.id)
         refresh_token = await self.token_service.generate_refresh_token(user.id)
@@ -74,3 +92,6 @@ class AuthService:
             raise TokenNotCorrect
 
         return payload["user_id"]
+
+
+
