@@ -24,7 +24,10 @@ class UserRepository:
         async with self.session as session:
             user_model = UserProfile(
                 username=username,
-                password=hash_password(password))
+                password=hash_password(password),
+                login_attempts=0,
+                block_until=None
+            )
             session.add(user_model)
             await session.commit()
 

@@ -28,6 +28,7 @@ async def login(
             detail=e.detail
         )
 
+
 @router.post("/logout")
 async def logout(
         auth_service: Annotated[AuthService, Depends(get_auth_service)],
@@ -39,6 +40,7 @@ async def logout(
             status_code=401,
             detail=e.detail
         )
+
 
 @router.get("/refresh")
 async def refresh(
@@ -53,4 +55,3 @@ async def refresh(
             status_code=401,
             detail=str(e)
         )
-
